@@ -14,6 +14,9 @@ package edu.cmu.sphinx.demo.transcriber;
 
 import edu.cmu.sphinx.frontend.util.AudioFileDataSource;
 import edu.cmu.sphinx.recognizer.Recognizer;
+import edu.cmu.sphinx.result.ConfidenceResult;
+import edu.cmu.sphinx.result.ConfidenceScorer;
+import edu.cmu.sphinx.result.Path;
 import edu.cmu.sphinx.result.Result;
 import edu.cmu.sphinx.util.props.ConfigurationManager;
 
@@ -23,12 +26,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.text.DecimalFormat;
 
 /**
  * A simple example that shows how to transcribe a continuous audio file that
  * has multiple utterances in it.
  */
 public class Transcriber {
+	private static DecimalFormat format = new DecimalFormat("#.#####");
 	public static void main(String[] args) throws IOException,
 			UnsupportedAudioFileException {
 		URL audioURL;
@@ -64,8 +69,17 @@ public class Transcriber {
 
 		long beforeRun = System.currentTimeMillis();
 		while ((result = recognizer.recognize()) != null) {
-			String resultText = result.getBestResultNoFiller();
-			sbSpeech.append(resultText + ". ");
+			 ConfidenceScorer cs = (ConfidenceScorer) cm.lookup("confidenceScorer");
+			 ConfidenceResult cr = cs.score(result);
+             Path best = cr.getBestHypothesis();
+             System.out.println(best.getTranscription());
+             System.out.println
+             ("     (confidence: " +
+                     format.format(best.getLogMath().logToLinear
+                             ((float) best.getConfidence()))
+                     + ')');
+//			String resultText = result.getBestResultNoFiller();
+//			sbSpeech.append(resultText + ". ");
 		}
 		double timeDiff = (System.currentTimeMillis() - beforeRun) / 1000.0;
 		if (strResultTextFilePath == null)
